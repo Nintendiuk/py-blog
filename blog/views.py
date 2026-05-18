@@ -1,30 +1,30 @@
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views import generic
+from django.views.generic import ListView, DetailView
 
+from .models import Post, Commentary
 from .forms import CommentForm
-from .models import Post
 
 
-class IndexView(generic.ListView):
+class IndexView(ListView):
     model = Post
     template_name = "blog/index.html"
     context_object_name = "post_list"
     paginate_by = 5
 
 
-class PostDetailView(generic.DetailView):
+class PostDetailView(DetailView):
     model = Post
     template_name = "blog/post_detail.html"
-    form_class = CommentForm
+    context_object_name = "post"
 
-    def get__success_url(self) -> str:
-        return reverse("blog:post-detail", kwargs={"pk": self.object.id})
+    def get_success_url(self):
+        return reverse("blog:post-detail", kwargs={"pk": self.object.pk})
 
-    def get_context_data(self, **kwargs) -> dict:
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["comments"] = self.object.comments.select_related(
-            "user",
+            "user"
         ).order_by("-created_time")
         if "form" not in context:
             context["form"] = CommentForm()
@@ -42,8 +42,6 @@ class PostDetailView(generic.DetailView):
             comment.post = self.object
             comment.user = request.user
             comment.save()
-            return redirect(
-                reverse("blog:post-detail", kwargs={"pk": self.object.pk})
-            )
+            return redirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(form=form))
