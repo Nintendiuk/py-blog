@@ -42,6 +42,8 @@ class PostDetailView(generic.DetailView):
             comment.post = self.object
             comment.user = request.user
             comment.save()
-            return redirect(reverse("blog:post-detail", kwargs={"pk": self.object.pk}))
+            return redirect(
+                reverse("blog:post-detail", kwargs={"pk": self.object.pk})
+            )
         else:
             return self.render_to_response(self.get_context_data(form=form))
